@@ -18,11 +18,7 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.truckapp123.truckapp",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+      "package": "com.truckapp123.truckapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
