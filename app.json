@@ -18,7 +18,10 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "com.truckapp123.truckapp"
+      "package": "com.truckapp123.truckapp",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -30,6 +33,11 @@
           "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ddf66d9b-4755-4e41-8f91-76fc3a4395a5"
+      }
+    }
   }
 }
