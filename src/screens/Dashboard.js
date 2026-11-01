@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, Share } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadData, addEntry } from '../storage';
 
 export default function Dashboard() {
@@ -42,13 +43,28 @@ export default function Dashboard() {
   const shareReport = async () => {
     try {
       const message = `🚚 *ट्रक हिशोब रिपोर्ट*\n\n💰 एकूण कमाई: ₹${stats.income}\n💸 एकूण खर्च: ₹${stats.expense}\n📈 निव्वळ नफा: ₹${stats.profit}\n⏳ येणं बाकी: ₹${stats.pending}\n\n(ट्रक ॲप द्वारे पाठवलेला रिपोर्ट)`;
-      
-      await Share.share({
-        message: message,
-      });
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    }
+      await Share.share({ message });
+    } catch (error) { Alert.alert('Error', error.message); }
+  };
+
+  // सगळा डेटा पुसण्याचं फंक्शन
+  const clearAllData = () => {
+    Alert.alert(
+      "डेटा पुसायचा का?",
+      "तुमचा सगळा जुना हिशोब पुसला जाईल. हे पुन्हा परत मिळणार नाही!",
+      [
+        { text: "रद्द करा", style: "cancel" },
+        { 
+          text: "हो, पुसा", 
+          style: "destructive", 
+          onPress: async () => {
+            await AsyncStorage.clear();
+            calc();
+            Alert.alert("✅ झालं", "सगळा डेटा यशस्वीरित्या पुसला गेला!");
+          } 
+        }
+      ]
+    );
   };
 
   return (
@@ -79,6 +95,12 @@ export default function Dashboard() {
         <Ionicons name="warning-outline" size={22} color="#fff" />
         <Text style={s.lowBtnTxt}>Fuel Low — मालकाला कळवा</Text>
       </TouchableOpacity>
+
+      {/* नवीन डेटा क्लिअर बटन */}
+      <TouchableOpacity style={s.clearBtn} onPress={clearAllData}>
+        <Ionicons name="trash-outline" size={20} color="#64748b" />
+        <Text style={s.clearBtnTxt}>सगळा डेटा पुसून टाका (Clear Data)</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -107,5 +129,7 @@ const s = StyleSheet.create({
   lowBtnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginLeft: 8 },
   alertBox: { backgroundColor: '#FEF3C7', padding: 16, borderRadius: 12, flexDirection: 'row', marginBottom: 20, borderWidth: 1, borderColor: '#FDE68A' },
   alertTitle: { fontWeight: 'bold', color: '#B45309', fontSize: 15 },
-  alertTxt: { color: '#92400E', fontSize: 12, marginTop: 2 }
+  alertTxt: { color: '#92400E', fontSize: 12, marginTop: 2 },
+  clearBtn: { padding: 16, marginTop: 30, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 12, backgroundColor: '#fff' },
+  clearBtnTxt: { color: '#64748b', fontWeight: 'bold', fontSize: 15, marginLeft: 8 }
 });
