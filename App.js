@@ -1,15 +1,37 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Text } from 'react-native';
+
+import Dashboard from './src/screens/Dashboard';
+import FuelEntry from './src/screens/FuelEntry';
+import Kargoship from './src/screens/Kargoship';
+import Driver from './src/screens/Driver';
+import Alerts from './src/screens/Alerts';
+
+const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>🎉 ॲप सुरू झालं!</Text>
-    </View>
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ size }) => {
+            const icons = { डॅशबोर्ड:'🏠', डिझेल:'⛽', कार्गो:'📦', ड्रायव्हर:'👨‍✈️', अलर्ट:'🔔' };
+            return <Text style={{ fontSize: size }}>{icons[route.name]}</Text>;
+          },
+          tabBarActiveTintColor: '#e67e22',
+          headerStyle: { backgroundColor: '#2c3e50' },
+          headerTintColor: '#fff',
+          tabBarLabelStyle: { fontSize: 10 },
+        })}
+      >
+        <Tab.Screen name="डॅशबोर्ड" component={Dashboard} />
+        <Tab.Screen name="डिझेल" component={FuelEntry} />
+        <Tab.Screen name="कार्गो" component={Kargoship} />
+        <Tab.Screen name="ड्रायव्हर" component={Driver} />
+        <Tab.Screen name="अलर्ट" component={Alerts} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  text: { fontSize: 24, fontWeight: 'bold', color: 'green' }
-});
