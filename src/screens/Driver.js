@@ -1,15 +1,30 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadData, addEntry, deleteEntry } from '../storage';
+import { loadData, addEntry, deleteEntry, getActiveTruck } from '../storage';
+import { auth, db } from '../firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Driver() {
   const [type, setType] = useState('पगार');
   const [amount, setAmount] = useState('');
   const [note, setNote] = useState('');
   const [list, setList] = useState([]);
+  const [activeTruck, setActiveTruck] = useState('');
+  
+  const [modalVisible, setModalVisible] = useState(false);
+  const [driverEmail, setDriverEmail] = useState('');
+  const [driverPass, setDriverPass] = useState('');
 
-  const load = async () => setList(await loadData('DRIVER'));
+  const load = async () => {
+    const truck = await getActiveTruck();
+    setActiveTruck(truck);
+    const data = await loadData('DRIVER');
+    const filtered = data.filter(item => item.truckId === truck || !item.truckId);
+    setList(filtered);
+  };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const save = async () => {
@@ -19,9 +34,36 @@ export default function Driver() {
     load();
   };
 
+  const createDriverAccount = async () => {
+    if (!driverEmail || !driverPass) return Alert.alert('Error', 'ईमेल आणि पासवर्ड भरा');
+    try {
+      const userCred = await createUserWithEmailAndPassword(auth, driverEmail, driverPass);
+      await setDoc(doc(db, "users", userCred.user.uid), {
+        email: driverEmail,
+        role: "driver",
+        linkedTruck: activeTruck
+      });
+
+      Alert.alert('✅ झालं', 'ड्रायव्हरचं खातं तयार झालं! आता तो या ईमेलने लॉगिन करू शकतो.');
+      setModalVisible(false);
+      setDriverEmail(''); setDriverPass('');
+      
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        <View style={s.headerBox}><Text style={s.headerTxt}>सध्याचा ट्रक: {activeTruck}</Text></View>
+
+        <TouchableOpacity style={s.addDriverBtn} onPress={() => setModalVisible(true)}>
+          <Ionicons name="person-add" size={20} color="#fff" />
+          <Text style={s.addDriverTxt}>नवीन ड्रायव्हर ॲड करा</Text>
+        </TouchableOpacity>
+
         <View style={s.form}>
           <View style={{ flexDirection: 'row', marginBottom: 10 }}>
             {['पगार', 'उचल'].map((t) => (
@@ -36,6 +78,7 @@ export default function Driver() {
           <TextInput style={s.input} placeholder="उदा. ऑक्टोबर महिन्याचा पगार" placeholderTextColor="#94a3b8" value={note} onChangeText={setNote} />
           <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
         </View>
+
         <FlatList data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={s.row}>
@@ -43,10 +86,26 @@ export default function Driver() {
                 <Text style={s.rowT}>{item.type} · ₹{item.amount}</Text>
                 <Text style={s.rowD}>{item.date} {item.note ? '· ' + item.note : ''}</Text>
               </View>
-              <TouchableOpacity onPress={async () => setList(await deleteEntry('DRIVER', item.id))}><Text style={s.del}>काढा</Text></TouchableOpacity>
+              <TouchableOpacity onPress={async () => { await deleteEntry('DRIVER', item.id); load(); }}><Text style={s.del}>काढा</Text></TouchableOpacity>
             </View>
           )}
         />
+
+        <Modal visible={modalVisible} transparent animationType="slide">
+          <View style={s.modalBg}>
+            <View style={s.modalBox}>
+              <Text style={s.modalTitle}>ड्रायव्हरचं खातं तयार करा</Text>
+              <Text style={s.label}>ड्रायव्हरचा ईमेल</Text>
+              <TextInput style={s.input} placeholder="driver@gmail.com" value={driverEmail} onChangeText={setDriverEmail} keyboardType="email-address" autoCapitalize="none" />
+              <Text style={s.label}>पासवर्ड (किमान ६ अक्षरं)</Text>
+              <TextInput style={s.input} placeholder="******" value={driverPass} onChangeText={setDriverPass} secureTextEntry />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
+                <TouchableOpacity style={s.modalBtnCancel} onPress={() => setModalVisible(false)}><Text style={{ color: '#64748b', fontWeight: 'bold' }}>रद्द करा</Text></TouchableOpacity>
+                <TouchableOpacity style={s.modalBtnSave} onPress={createDriverAccount}><Text style={{ color: '#fff', fontWeight: 'bold' }}>तयार करा</Text></TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -54,6 +113,10 @@ export default function Driver() {
 
 const s = StyleSheet.create({
   c: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+  headerBox: { backgroundColor: '#e2e8f0', padding: 10, borderRadius: 8, marginBottom: 10 },
+  headerTxt: { fontWeight: 'bold', color: '#334155', textAlign: 'center' },
+  addDriverBtn: { backgroundColor: '#16a085', padding: 14, borderRadius: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+  addDriverTxt: { color: '#fff', fontWeight: 'bold', fontSize: 15, marginLeft: 8 },
   form: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16, elevation: 2 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 6, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, color: '#000', backgroundColor: '#f8fafc' },
@@ -65,4 +128,9 @@ const s = StyleSheet.create({
   rowT: { fontWeight: 'bold', fontSize: 15, color: '#1e293b' },
   rowD: { fontSize: 13, color: '#64748b', marginTop: 2 },
   del: { color: '#ef4444', fontWeight: 'bold', fontSize: 14 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
+  modalBox: { backgroundColor: '#fff', padding: 20, borderRadius: 12 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#1E293B' },
+  modalBtnCancel: { padding: 12, flex: 1, alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 8, marginRight: 10 },
+  modalBtnSave: { padding: 12, flex: 1, alignItems: 'center', backgroundColor: '#3B82F6', borderRadius: 8 }
 });

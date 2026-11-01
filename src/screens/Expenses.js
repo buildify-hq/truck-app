@@ -1,14 +1,21 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { loadData, addEntry, deleteEntry } from '../storage';
+import { loadData, addEntry, deleteEntry, getActiveTruck } from '../storage';
 
 export default function Expenses() {
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [list, setList] = useState([]);
+  const [activeTruck, setActiveTruck] = useState('');
 
-  const load = async () => setList(await loadData('EXPENSES'));
+  const load = async () => {
+    const truck = await getActiveTruck();
+    setActiveTruck(truck);
+    const data = await loadData('EXPENSES');
+    const filtered = data.filter(item => item.truckId === truck || !item.truckId);
+    setList(filtered);
+  };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const save = async () => {
@@ -21,6 +28,11 @@ export default function Expenses() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        <View style={s.headerBox}>
+          <Text style={s.headerTxt}>सध्याचा ट्रक: {activeTruck}</Text>
+        </View>
+
         <View style={s.form}>
           <Text style={s.label}>खर्चाचं नाव (उदा. टायर, टोल, सर्व्हिसिंग)</Text>
           <TextInput style={s.input} placeholder="उदा. टायर पंक्चर" placeholderTextColor="#94a3b8" value={name} onChangeText={setName} />
@@ -37,7 +49,7 @@ export default function Expenses() {
                 <Text style={s.rowD}>{item.date}</Text>
               </View>
               <Text style={s.rowAmt}>₹{item.amount}</Text>
-              <TouchableOpacity onPress={async () => setList(await deleteEntry('EXPENSES', item.id))}>
+              <TouchableOpacity onPress={async () => { await deleteEntry('EXPENSES', item.id); load(); }}>
                 <Text style={s.del}>काढा</Text>
               </TouchableOpacity>
             </View>
@@ -50,6 +62,8 @@ export default function Expenses() {
 
 const s = StyleSheet.create({
   c: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+  headerBox: { backgroundColor: '#e2e8f0', padding: 10, borderRadius: 8, marginBottom: 10 },
+  headerTxt: { fontWeight: 'bold', color: '#334155', textAlign: 'center' },
   form: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16, elevation: 2 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 6, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, color: '#000', backgroundColor: '#f8fafc' },

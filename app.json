@@ -1,32 +1,29 @@
 {
   "expo": {
-    "name": "truck-app",
+    "name": "ट्रक हिशोब",
     "slug": "truck-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "android": {
       "package": "com.truckapp123.truckapp",
+      "versionCode": 1,
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "plugins": [
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app needs access to your photos to attach bills to entries."
+          "photosPermission": "ॲपला बिलाचे फोटो काढण्यासाठी गॅलरी आणि कॅमेऱ्याची परवानगी हवी आहे."
         }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "ddf66d9b-4755-4e41-8f91-76fc3a4395a5"
-      }
-    }
+      ],
+      "expo-notifications"
+    ]
   }
 }

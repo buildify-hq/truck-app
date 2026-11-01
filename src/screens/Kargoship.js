@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, Image, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { loadData, addEntry, deleteEntry } from '../storage';
+import { loadData, addEntry, deleteEntry, getActiveTruck } from '../storage';
 
 export default function Kargoship() {
   const [slip, setSlip] = useState('');
@@ -11,8 +11,15 @@ export default function Kargoship() {
   const [pending, setPending] = useState('');
   const [photo, setPhoto] = useState(null);
   const [list, setList] = useState([]);
+  const [activeTruck, setActiveTruck] = useState('');
 
-  const load = async () => setList(await loadData('KARGO'));
+  const load = async () => {
+    const truck = await getActiveTruck();
+    setActiveTruck(truck);
+    const data = await loadData('KARGO');
+    const filtered = data.filter(item => item.truckId === truck || !item.truckId);
+    setList(filtered);
+  };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const pick = async () => {
@@ -32,6 +39,11 @@ export default function Kargoship() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        <View style={s.headerBox}>
+          <Text style={s.headerTxt}>सध्याचा ट्रक: {activeTruck}</Text>
+        </View>
+
         <View style={s.form}>
           <Text style={s.label}>स्लिप नंबर</Text>
           <TextInput style={s.input} placeholder="उदा. 1024" placeholderTextColor="#94a3b8" value={slip} onChangeText={setSlip} />
@@ -47,6 +59,7 @@ export default function Kargoship() {
           {photo && <Image source={{ uri: photo }} style={s.img} />}
           <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
         </View>
+
         <FlatList data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={s.row}>
@@ -55,7 +68,7 @@ export default function Kargoship() {
                 <Text style={s.rowT}>स्लिप #{item.slip} · ₹{item.amount}</Text>
                 <Text style={s.rowD}>कमिशन ₹{item.commission || 0} · बाकी ₹{item.pending || 0}</Text>
               </View>
-              <TouchableOpacity onPress={async () => setList(await deleteEntry('KARGO', item.id))}><Text style={s.del}>काढा</Text></TouchableOpacity>
+              <TouchableOpacity onPress={async () => { await deleteEntry('KARGO', item.id); load(); }}><Text style={s.del}>काढा</Text></TouchableOpacity>
             </View>
           )}
         />
@@ -66,6 +79,8 @@ export default function Kargoship() {
 
 const s = StyleSheet.create({
   c: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+  headerBox: { backgroundColor: '#e2e8f0', padding: 10, borderRadius: 8, marginBottom: 10 },
+  headerTxt: { fontWeight: 'bold', color: '#334155', textAlign: 'center' },
   form: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16, elevation: 2 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 6, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, color: '#000', backgroundColor: '#f8fafc' },
