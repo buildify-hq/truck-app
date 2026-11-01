@@ -1,30 +1,22 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text } from 'react-native';
+import Dashboard from './src/screens/Dashboard';
 
 const Tab = createBottomTabNavigator();
 
 function DummyScreen({ name }) {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>{name} स्क्रीन चालू आहे!</Text>
-    </View>
+    <Text style={{ textAlign: 'center', marginTop: 50, fontSize: 20 }}>{name} चालू आहे!</Text>
   );
 }
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ size }) => {
-            const icons = { डॅशबोर्ड:'🏠', डिझेल:'⛽', कार्गो:'📦', ड्रायव्हर:'👨‍✈️', अलर्ट:'🔔' };
-            return <Text style={{ fontSize: size }}>{icons[route.name]}</Text>;
-          },
-        })}
-      >
-        <Tab.Screen name="डॅशबोर्ड">{() => <DummyScreen name="डॅशबोर्ड" />}</Tab.Screen>
+      <Tab.Navigator screenOptions={{ headerShown: true }}>
+        <Tab.Screen name="डॅशबोर्ड" component={Dashboard} />
         <Tab.Screen name="डिझेल">{() => <DummyScreen name="डिझेल" />}</Tab.Screen>
         <Tab.Screen name="कार्गो">{() => <DummyScreen name="कार्गो" />}</Tab.Screen>
         <Tab.Screen name="ड्रायव्हर">{() => <DummyScreen name="ड्रायव्हर" />}</Tab.Screen>
@@ -33,8 +25,3 @@ export default function App() {
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  text: { fontSize: 20, fontWeight: 'bold' }
-});
