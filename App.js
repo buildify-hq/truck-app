@@ -17,12 +17,13 @@ import Expenses from './src/screens/Expenses';
 import Maintenance from './src/screens/Maintenance';
 import Alerts from './src/screens/Alerts';
 import SuperAdmin from './src/screens/SuperAdmin';
+import Files from './src/screens/Files';
 
 const Tab = createBottomTabNavigator();
 
 const icons = {
   'डॅशबोर्ड': 'grid-outline', 'डिझेल': 'speedometer-outline', 'कार्गो': 'cube-outline',
-  'ड्रायव्हर': 'person-outline', 'खर्च': 'wallet-outline', 'सर्व्हिसिंग': 'construct-outline', 'अलर्ट': 'notifications-outline'
+  'ड्रायव्हर': 'person-outline', 'खर्च': 'wallet-outline', 'सर्व्हिसिंग': 'construct-outline', 'अलर्ट': 'notifications-outline', 'फाईल्स': 'folder-outline'
 };
 
 function OwnerTabs() {
@@ -41,6 +42,7 @@ function OwnerTabs() {
       <Tab.Screen name="ड्रायव्हर" component={Driver} />
       <Tab.Screen name="खर्च" component={Expenses} />
       <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} />
+      <Tab.Screen name="फाईल्स" component={Files} />
       <Tab.Screen name="अलर्ट" component={Alerts} />
     </Tab.Navigator>
   );
@@ -57,6 +59,7 @@ function DriverTabs() {
       }}>
       <Tab.Screen name="डिझेल एंट्री" component={FuelEntry} options={{ tabBarIcon: ({color, size}) => <Ionicons name="speedometer-outline" size={size} color={color} /> }} />
       <Tab.Screen name="कार्गो स्लिप" component={Kargoship} options={{ tabBarIcon: ({color, size}) => <Ionicons name="cube-outline" size={size} color={color} /> }} />
+      <Tab.Screen name="फाईल्स" component={Files} options={{ tabBarIcon: ({color, size}) => <Ionicons name="folder-outline" size={size} color={color} /> }} />
       <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} options={{ tabBarIcon: ({color, size}) => <Ionicons name="construct-outline" size={size} color={color} /> }} />
     </Tab.Navigator>
   );

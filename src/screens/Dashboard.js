@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, Share, Platform, Modal, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, doc, deleteDoc, getDocs } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { loadData, getActiveTruck, setActiveTruck, getTrucks, addTruck, deleteTruck } from '../storage';
@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [newTruckId, setNewTruckId] = useState('');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
+  // रिअल-टाइम अलर्ट
   useEffect(() => {
     const q = query(collection(db, "fuelAlerts"), orderBy("timestamp", "desc"), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -26,6 +27,18 @@ export default function Dashboard() {
     });
     return () => unsubscribe();
   }, []);
+
+  // अलर्ट पुसण्याचं फंक्शन (Firebase मधून डिलीट करण्यासाठी)
+  const clearAlerts = async () => {
+    try {
+      const q = query(collection(db, "fuelAlerts"));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(async (document) => {
+        await deleteDoc(doc(db, "fuelAlerts", document.id));
+      });
+      setFuelAlerts([]);
+    } catch (e) { Alert.alert('Error', e.message); }
+  };
 
   const calc = async () => {
     setRefresh(true);
@@ -67,10 +80,7 @@ export default function Dashboard() {
       setDeleteModalVisible(false);
       return Alert.alert('Error', 'कमीत कमी एक ट्रक असणं गरजेचं आहे.');
     }
-    
     await deleteTruck(activeTruck);
-    
-    // लगेच स्क्रीनवरून काढून टाकण्यासाठी
     const updated = trucksList.filter(t => t !== activeTruck);
     setTrucksList(updated);
     if (updated.length > 0) {
@@ -116,6 +126,9 @@ export default function Dashboard() {
             <Text style={s.alertTitle}>🚨 डिझेल अलर्ट्स (Realtime)</Text>
             {fuelAlerts.map((a) => <Text key={a.id} style={s.alertTxt}>{a.time}</Text>)}
           </View>
+          <TouchableOpacity onPress={clearAlerts} style={{ padding: 5 }}>
+            <Ionicons name="close-circle" size={26} color="#D97706" />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -130,6 +143,7 @@ export default function Dashboard() {
         <Ionicons name="logo-whatsapp" size={22} color="#fff" /><Text style={s.shareBtnTxt}>हिशोब WhatsApp वर शेअर करा</Text>
       </TouchableOpacity>
 
+      {/* Add Truck Modal */}
       <Modal visible={addModalVisible} transparent animationType="slide">
         <View style={s.modalBg}><View style={s.modalBox}><Text style={s.modalTitle}>नवीन ट्रकचा नंबर टाका</Text>
           <TextInput style={s.modalInput} placeholder="उदा. MH-14-XY-9876" value={newTruckId} onChangeText={setNewTruckId} autoCapitalize="characters" />
@@ -140,6 +154,7 @@ export default function Dashboard() {
         </View></View>
       </Modal>
 
+      {/* Delete Truck Modal */}
       <Modal visible={deleteModalVisible} transparent animationType="fade">
         <View style={s.modalBg}><View style={s.modalBox}><Text style={s.modalTitle}>ट्रक डिलीट करायचा का?</Text>
           <Text style={{ color: '#64748b', marginBottom: 15 }}>तुम्ही {activeTruck} डिलीट करत आहात. या ट्रकचा सगळा हिशोब पुसला जाईल!</Text>
