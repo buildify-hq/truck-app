@@ -8,6 +8,7 @@ import FuelEntry from './src/screens/FuelEntry';
 import Kargoship from './src/screens/Kargoship';
 import Driver from './src/screens/Driver';
 import Alerts from './src/screens/Alerts';
+import Expenses from './src/screens/Expenses';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,6 +17,7 @@ const icons = {
   'डिझेल': 'speedometer-outline',
   'कार्गो': 'cube-outline',
   'ड्रायव्हर': 'person-outline',
+  'खर्च': 'wallet-outline',
   'अलर्ट': 'notifications-outline'
 };
 
@@ -27,19 +29,20 @@ export default function App() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name={icons[route.name]} size={size} color={color} />
           ),
-          tabBarActiveTintColor: '#2563EB', // Professional Blue
+          tabBarActiveTintColor: '#2563EB',
           tabBarInactiveTintColor: '#94A3B8',
           headerStyle: { backgroundColor: '#1E293B' },
           headerTintColor: '#fff',
           headerTitleStyle: { fontWeight: 'bold' },
-          tabBarStyle: { paddingBottom: 5, height: 60 },
-          tabBarLabelStyle: { fontSize: 11, fontWeight: '600' }
+          tabBarStyle: { paddingBottom: 12, paddingTop: 8, height: 75 },
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginBottom: 5 }
         })}
       >
         <Tab.Screen name="डॅशबोर्ड" component={Dashboard} />
         <Tab.Screen name="डिझेल" component={FuelEntry} />
         <Tab.Screen name="कार्गो" component={Kargoship} />
         <Tab.Screen name="ड्रायव्हर" component={Driver} />
+        <Tab.Screen name="खर्च" component={Expenses} />
         <Tab.Screen name="अलर्ट" component={Alerts} />
       </Tab.Navigator>
     </NavigationContainer>

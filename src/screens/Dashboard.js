@@ -14,6 +14,7 @@ export default function Dashboard() {
     const kargo = await loadData('KARGO');
     const fuel = await loadData('FUEL');
     const driver = await loadData('DRIVER');
+    const exp = await loadData('EXPENSES'); // नवीन खर्च इथे येतोय
     const alerts = await loadData('FUEL_LOW');
 
     const income = kargo.reduce((s, k) => s + Number(k.amount || 0), 0);
@@ -21,8 +22,11 @@ export default function Dashboard() {
     const pend = kargo.reduce((s, k) => s + Number(k.pending || 0), 0);
     const fuelCost = fuel.reduce((s, f) => s + Number(f.amount || 0), 0);
     const drvCost = driver.reduce((s, d) => s + Number(d.amount || 0), 0);
+    const otherCost = exp.reduce((s, e) => s + Number(e.amount || 0), 0);
 
-    setStats({ income, expense: fuelCost + drvCost + comm, profit: income - fuelCost - drvCost - comm, pending: pend });
+    const totalExpense = fuelCost + drvCost + comm + otherCost;
+
+    setStats({ income, expense: totalExpense, profit: income - totalExpense, pending: pend });
     setFuelAlerts(alerts.slice(0, 3));
     setRefresh(false);
   };
@@ -37,7 +41,6 @@ export default function Dashboard() {
 
   return (
     <ScrollView style={s.c} refreshControl={<RefreshControl refreshing={refresh} onRefresh={calc} />}>
-      
       {fuelAlerts.length > 0 && (
         <View style={s.alertBox}>
           <Ionicons name="warning" size={24} color="#D97706" />
@@ -59,7 +62,6 @@ export default function Dashboard() {
         <Ionicons name="warning-outline" size={22} color="#fff" />
         <Text style={s.lowBtnTxt}>Fuel Low — मालकाला कळवा</Text>
       </TouchableOpacity>
-      
     </ScrollView>
   );
 }
