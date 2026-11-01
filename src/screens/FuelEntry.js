@@ -18,9 +18,7 @@ export default function FuelEntry() {
     try {
       const res = await ImagePicker.launchCameraAsync({ quality: 0.5 });
       if (!res.canceled) setPhoto(res.assets[0].uri);
-    } catch (e) {
-      Alert.alert('Error', 'कॅमेरा उघडत नाहीये');
-    }
+    } catch (e) { Alert.alert('Error', 'कॅमेरा उघडत नाहीये'); }
   };
 
   const save = async () => {
@@ -32,30 +30,21 @@ export default function FuelEntry() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView style={s.c}>
+      <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={s.form}>
-          
           <Text style={s.label}>डिझेलची रक्कम (₹)</Text>
           <TextInput style={s.input} placeholder="उदा. 5000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={amount} onChangeText={setAmount} />
-          
           <Text style={s.label}>किती लिटर डिझेल भरलं?</Text>
           <TextInput style={s.input} placeholder="उदा. 50" placeholderTextColor="#94a3b8" keyboardType="numeric" value={liters} onChangeText={setLiters} />
-          
           <Text style={s.label}>गाडीचं मीटर (KM)</Text>
           <TextInput style={s.input} placeholder="उदा. 150000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={km} onChangeText={setKm} />
-
           <TouchableOpacity style={s.photoBtn} onPress={pickImage}>
             <Text style={s.photoTxt}>{photo ? '📷 फोटो बदला' : '📷 बिलाचा फोटो काढा'}</Text>
           </TouchableOpacity>
           {photo && <Image source={{ uri: photo }} style={s.img} />}
-          
-          <TouchableOpacity style={s.btn} onPress={save}>
-            <Text style={s.btnTxt}>सेव्ह करा</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
         </View>
-
-        <FlatList
-          data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
+        <FlatList data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={s.row}>
               {item.photo && <Image source={{ uri: item.photo }} style={s.thumb} />}
@@ -63,9 +52,7 @@ export default function FuelEntry() {
                 <Text style={s.rowT}>₹{item.amount} · {item.liters}L · {item.km || '-'} KM</Text>
                 <Text style={s.rowD}>{item.date}</Text>
               </View>
-              <TouchableOpacity onPress={async () => setList(await deleteEntry('FUEL', item.id))}>
-                <Text style={s.del}>काढा</Text>
-              </TouchableOpacity>
+              <TouchableOpacity onPress={async () => setList(await deleteEntry('FUEL', item.id))}><Text style={s.del}>काढा</Text></TouchableOpacity>
             </View>
           )}
         />

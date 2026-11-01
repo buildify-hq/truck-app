@@ -19,9 +19,7 @@ export default function Kargoship() {
     try {
       const res = await ImagePicker.launchCameraAsync({ quality: 0.5 });
       if (!res.canceled) setPhoto(res.assets[0].uri);
-    } catch (e) {
-      Alert.alert('Error', 'कॅमेरा उघडत नाहीये');
-    }
+    } catch (e) { Alert.alert('Error', 'कॅमेरा उघडत नाहीये'); }
   };
 
   const save = async () => {
@@ -33,33 +31,23 @@ export default function Kargoship() {
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView style={s.c}>
+      <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={s.form}>
-          
           <Text style={s.label}>स्लिप नंबर</Text>
           <TextInput style={s.input} placeholder="उदा. 1024" placeholderTextColor="#94a3b8" value={slip} onChangeText={setSlip} />
-          
           <Text style={s.label}>एकूण कार्गो रक्कम (₹)</Text>
           <TextInput style={s.input} placeholder="उदा. 15000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={amount} onChangeText={setAmount} />
-          
           <Text style={s.label}>कमिशन कापलं (₹)</Text>
           <TextInput style={s.input} placeholder="उदा. 500" placeholderTextColor="#94a3b8" keyboardType="numeric" value={commission} onChangeText={setCommission} />
-          
           <Text style={s.label}>किती पैसे यायचे बाकी आहेत? (₹)</Text>
           <TextInput style={s.input} placeholder="उदा. 2000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={pending} onChangeText={setPending} />
-
           <TouchableOpacity style={s.photoBtn} onPress={pick}>
             <Text style={s.photoTxt}>{photo ? '📷 फोटो बदला' : '📷 स्लिपचा फोटो काढा'}</Text>
           </TouchableOpacity>
           {photo && <Image source={{ uri: photo }} style={s.img} />}
-          
-          <TouchableOpacity style={s.btn} onPress={save}>
-            <Text style={s.btnTxt}>सेव्ह करा</Text>
-          </TouchableOpacity>
+          <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
         </View>
-
-        <FlatList
-          data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
+        <FlatList data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={s.row}>
               {item.photo && <Image source={{ uri: item.photo }} style={s.thumb} />}
@@ -67,9 +55,7 @@ export default function Kargoship() {
                 <Text style={s.rowT}>स्लिप #{item.slip} · ₹{item.amount}</Text>
                 <Text style={s.rowD}>कमिशन ₹{item.commission || 0} · बाकी ₹{item.pending || 0}</Text>
               </View>
-              <TouchableOpacity onPress={async () => setList(await deleteEntry('KARGO', item.id))}>
-                <Text style={s.del}>काढा</Text>
-              </TouchableOpacity>
+              <TouchableOpacity onPress={async () => setList(await deleteEntry('KARGO', item.id))}><Text style={s.del}>काढा</Text></TouchableOpacity>
             </View>
           )}
         />
