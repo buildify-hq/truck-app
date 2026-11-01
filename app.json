@@ -6,9 +6,14 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
-      "package": "com.truckapp123.truckapp"
+      "package": "com.truckapp123.truckapp",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       [
@@ -17,6 +22,11 @@
           "photosPermission": "The app needs access to your photos to attach bills to entries."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ddf66d9b-4755-4e41-8f91-76fc3a4395a5"
+      }
+    }
   }
 }
