@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Alert, Share } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { loadData, addEntry } from '../storage';
@@ -14,7 +14,7 @@ export default function Dashboard() {
     const kargo = await loadData('KARGO');
     const fuel = await loadData('FUEL');
     const driver = await loadData('DRIVER');
-    const exp = await loadData('EXPENSES'); // नवीन खर्च इथे येतोय
+    const exp = await loadData('EXPENSES');
     const alerts = await loadData('FUEL_LOW');
 
     const income = kargo.reduce((s, k) => s + Number(k.amount || 0), 0);
@@ -39,6 +39,18 @@ export default function Dashboard() {
     calc();
   };
 
+  const shareReport = async () => {
+    try {
+      const message = `🚚 *ट्रक हिशोब रिपोर्ट*\n\n💰 एकूण कमाई: ₹${stats.income}\n💸 एकूण खर्च: ₹${stats.expense}\n📈 निव्वळ नफा: ₹${stats.profit}\n⏳ येणं बाकी: ₹${stats.pending}\n\n(ट्रक ॲप द्वारे पाठवलेला रिपोर्ट)`;
+      
+      await Share.share({
+        message: message,
+      });
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
   return (
     <ScrollView style={s.c} refreshControl={<RefreshControl refreshing={refresh} onRefresh={calc} />}>
       {fuelAlerts.length > 0 && (
@@ -57,6 +69,11 @@ export default function Dashboard() {
         <Card title="निव्वळ नफा" value={stats.profit} color="#3B82F6" icon="trending-up-outline" bg="#EFF6FF" />
         <Card title="येणं बाकी" value={stats.pending} color="#F59E0B" icon="time-outline" bg="#FFFBEB" />
       </View>
+
+      <TouchableOpacity style={s.shareBtn} onPress={shareReport}>
+        <Ionicons name="logo-whatsapp" size={22} color="#fff" />
+        <Text style={s.shareBtnTxt}>हिशोब WhatsApp वर शेअर करा</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={s.lowBtn} onPress={sendLow}>
         <Ionicons name="warning-outline" size={22} color="#fff" />
@@ -84,7 +101,9 @@ const s = StyleSheet.create({
   card: { width: '48%', padding: 16, borderRadius: 16, marginBottom: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
   cardTitle: { fontSize: 13, fontWeight: '600', marginLeft: 6 },
   cardVal: { fontSize: 22, fontWeight: 'bold' },
-  lowBtn: { backgroundColor: '#EF4444', padding: 18, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  shareBtn: { backgroundColor: '#25D366', padding: 18, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, shadowColor: '#25D366', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  shareBtnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginLeft: 8 },
+  lowBtn: { backgroundColor: '#EF4444', padding: 18, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 12, shadowColor: '#EF4444', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
   lowBtnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginLeft: 8 },
   alertBox: { backgroundColor: '#FEF3C7', padding: 16, borderRadius: 12, flexDirection: 'row', marginBottom: 20, borderWidth: 1, borderColor: '#FDE68A' },
   alertTitle: { fontWeight: 'bold', color: '#B45309', fontSize: 15 },

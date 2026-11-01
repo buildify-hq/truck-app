@@ -8,11 +8,31 @@ export default function FuelEntry() {
   const [amount, setAmount] = useState('');
   const [liters, setLiters] = useState('');
   const [km, setKm] = useState('');
+  const [mileage, setMileage] = useState(null);
   const [photo, setPhoto] = useState(null);
   const [list, setList] = useState([]);
 
-  const load = async () => setList(await loadData('FUEL'));
+  const load = async () => {
+    const data = await loadData('FUEL');
+    setList(data);
+  };
   useFocusEffect(useCallback(() => { load(); }, []));
+
+  const calcMileage = (currentKm, currentLiters) => {
+    if (list.length > 0 && currentKm && currentLiters) {
+      const lastKm = Number(list[0].km);
+      const currentKmNum = Number(currentKm);
+      const litersNum = Number(currentLiters);
+      
+      if (lastKm && currentKmNum > lastKm) {
+        const driven = currentKmNum - lastKm;
+        const result = (driven / litersNum).toFixed(1);
+        setMileage(result);
+        return;
+      }
+    }
+    setMileage(null);
+  };
 
   const pickImage = async () => {
     try {
@@ -24,7 +44,7 @@ export default function FuelEntry() {
   const save = async () => {
     if (!amount || !liters) return Alert.alert('टीप', 'रक्कम आणि लिटर भरा');
     await addEntry('FUEL', { amount, liters, km, photo, date: new Date().toLocaleDateString() });
-    setAmount(''); setLiters(''); setKm(''); setPhoto(null);
+    setAmount(''); setLiters(''); setKm(''); setPhoto(null); setMileage(null);
     load();
   };
 
@@ -34,16 +54,27 @@ export default function FuelEntry() {
         <View style={s.form}>
           <Text style={s.label}>डिझेलची रक्कम (₹)</Text>
           <TextInput style={s.input} placeholder="उदा. 5000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={amount} onChangeText={setAmount} />
+          
           <Text style={s.label}>किती लिटर डिझेल भरलं?</Text>
-          <TextInput style={s.input} placeholder="उदा. 50" placeholderTextColor="#94a3b8" keyboardType="numeric" value={liters} onChangeText={setLiters} />
+          <TextInput style={s.input} placeholder="उदा. 50" placeholderTextColor="#94a3b8" keyboardType="numeric" value={liters} onChangeText={(t) => { setLiters(t); calcMileage(km, t); }} />
+          
           <Text style={s.label}>गाडीचं मीटर (KM)</Text>
-          <TextInput style={s.input} placeholder="उदा. 150000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={km} onChangeText={setKm} />
+          <TextInput style={s.input} placeholder="उदा. 150000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={km} onChangeText={(t) => { setKm(t); calcMileage(t, liters); }} />
+
+          {mileage && (
+            <View style={s.mileageBox}>
+              <Text style={s.mileageTxt}>🚀 गाडीचं मायलेज: {mileage} किमी/लिटर</Text>
+            </View>
+          )}
+
           <TouchableOpacity style={s.photoBtn} onPress={pickImage}>
             <Text style={s.photoTxt}>{photo ? '📷 फोटो बदला' : '📷 बिलाचा फोटो काढा'}</Text>
           </TouchableOpacity>
           {photo && <Image source={{ uri: photo }} style={s.img} />}
+          
           <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
         </View>
+
         <FlatList data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
           renderItem={({ item }) => (
             <View style={s.row}>
@@ -66,6 +97,8 @@ const s = StyleSheet.create({
   form: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16, elevation: 2 },
   label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 6, marginTop: 10 },
   input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, color: '#000', backgroundColor: '#f8fafc' },
+  mileageBox: { backgroundColor: '#ECFDF5', padding: 12, borderRadius: 8, marginTop: 10, borderWidth: 1, borderColor: '#10B981' },
+  mileageTxt: { color: '#047857', fontWeight: 'bold', fontSize: 15, textAlign: 'center' },
   photoBtn: { borderWidth: 1, borderColor: '#e67e22', borderStyle: 'dashed', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 16, backgroundColor: '#fff7ed' },
   photoTxt: { color: '#e67e22', fontWeight: 'bold', fontSize: 15 },
   img: { width: '100%', height: 150, borderRadius: 8, marginTop: 10 },
