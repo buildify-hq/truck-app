@@ -4,18 +4,20 @@
     "slug": "truck-app",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "android": {
       "package": "com.truckapp123.truckapp"
     },
-    "extra": {
-      "eas": {
-        "projectId": "ff26436a-0de9-4643-9ac7-e42f7d0da23c"
-      }
-    },
-    "owner": "truckapp_new"
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow access to photos."
+        }
+      ],
+      "expo-notifications"
+    ]
   }
 }

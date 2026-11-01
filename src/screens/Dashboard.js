@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { collection, onSnapshot, query, orderBy, limit, doc, deleteDoc, getDocs } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { loadData, getActiveTruck, setActiveTruck, getTrucks, addTruck, deleteTruck } from '../storage';
+import { loadData, getActiveTruck, setActiveTruck, getTrucks, addTruck, deleteTruck, clearAllHistory } from '../storage';
 
 export default function Dashboard() {
   const [stats, setStats] = useState({ income: 0, expense: 0, profit: 0, pending: 0 });
@@ -16,8 +16,8 @@ export default function Dashboard() {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [newTruckId, setNewTruckId] = useState('');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [clearModalVisible, setClearModalVisible] = useState(false);
 
-  // रिअल-टाइम अलर्ट
   useEffect(() => {
     const q = query(collection(db, "fuelAlerts"), orderBy("timestamp", "desc"), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -28,14 +28,10 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  // अलर्ट पुसण्याचं फंक्शन (Firebase मधून डिलीट करण्यासाठी)
   const clearAlerts = async () => {
     try {
-      const q = query(collection(db, "fuelAlerts"));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(async (document) => {
-        await deleteDoc(doc(db, "fuelAlerts", document.id));
-      });
+      const snapshot = await getDocs(query(collection(db, "fuelAlerts")));
+      snapshot.forEach(async (document) => await deleteDoc(doc(db, "fuelAlerts", document.id)));
       setFuelAlerts([]);
     } catch (e) { Alert.alert('Error', e.message); }
   };
@@ -76,26 +72,24 @@ export default function Dashboard() {
   };
 
   const confirmDelete = async () => {
-    if (trucksList.length <= 1) {
-      setDeleteModalVisible(false);
-      return Alert.alert('Error', 'कमीत कमी एक ट्रक असणं गरजेचं आहे.');
-    }
+    if (trucksList.length <= 1) return Alert.alert('Error', 'कमीत कमी एक ट्रक असणं गरजेचं आहे.');
     await deleteTruck(activeTruck);
-    const updated = trucksList.filter(t => t !== activeTruck);
-    setTrucksList(updated);
-    if (updated.length > 0) {
-      setActiveTruckState(updated[0]);
-      await setActiveTruck(updated[0]);
-    }
     setDeleteModalVisible(false);
     setTimeout(() => calc(), 500);
+  };
+
+  const handleClearHistory = async () => {
+    await clearAllHistory();
+    setClearModalVisible(false);
+    Alert.alert('✅ झालं', 'सगळा जुना डेटा पुसला गेलाय!');
+    calc();
   };
 
   return (
     <ScrollView style={s.c} refreshControl={<RefreshControl refreshing={refresh} onRefresh={calc} />}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1E293B' }}>मालक डॅशबोर्ड</Text>
-        <TouchableOpacity onPress={() => signOut(auth)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEE2E2', padding: 8, borderRadius: 8 }}>
+        <TouchableOpacity onPress={() => signOut(auth)} style={s.logoutBtn}>
           <Ionicons name="log-out-outline" size={20} color="#EF4444" /><Text style={{ color: '#EF4444', fontWeight: 'bold', marginLeft: 5 }}>लॉगआउट</Text>
         </TouchableOpacity>
       </View>
@@ -126,9 +120,7 @@ export default function Dashboard() {
             <Text style={s.alertTitle}>🚨 डिझेल अलर्ट्स (Realtime)</Text>
             {fuelAlerts.map((a) => <Text key={a.id} style={s.alertTxt}>{a.time}</Text>)}
           </View>
-          <TouchableOpacity onPress={clearAlerts} style={{ padding: 5 }}>
-            <Ionicons name="close-circle" size={26} color="#D97706" />
-          </TouchableOpacity>
+          <TouchableOpacity onPress={clearAlerts} style={{ padding: 5 }}><Ionicons name="close-circle" size={26} color="#D97706" /></TouchableOpacity>
         </View>
       )}
 
@@ -143,9 +135,12 @@ export default function Dashboard() {
         <Ionicons name="logo-whatsapp" size={22} color="#fff" /><Text style={s.shareBtnTxt}>हिशोब WhatsApp वर शेअर करा</Text>
       </TouchableOpacity>
 
-      {/* Add Truck Modal */}
+      <TouchableOpacity style={s.clearBtn} onPress={() => setClearModalVisible(true)}>
+        <Ionicons name="trash" size={20} color="#ef4444" /><Text style={s.clearBtnTxt}>सगळा जुना डेटा पुसून टाका</Text>
+      </TouchableOpacity>
+
       <Modal visible={addModalVisible} transparent animationType="slide">
-        <View style={s.modalBg}><View style={s.modalBox}><Text style={s.modalTitle}>नवीन ट्रकचा नंबर टाका</Text>
+        <View style={s.modalBg}><View style={s.modalBox}><Text style={s.modalTitle}>नवीन ट्रकचा नंबर</Text>
           <TextInput style={s.modalInput} placeholder="उदा. MH-14-XY-9876" value={newTruckId} onChangeText={setNewTruckId} autoCapitalize="characters" />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
             <TouchableOpacity style={s.modalBtnCancel} onPress={() => setAddModalVisible(false)}><Text style={{ color: '#64748b', fontWeight: 'bold' }}>रद्द करा</Text></TouchableOpacity>
@@ -154,13 +149,22 @@ export default function Dashboard() {
         </View></View>
       </Modal>
 
-      {/* Delete Truck Modal */}
       <Modal visible={deleteModalVisible} transparent animationType="fade">
         <View style={s.modalBg}><View style={s.modalBox}><Text style={s.modalTitle}>ट्रक डिलीट करायचा का?</Text>
-          <Text style={{ color: '#64748b', marginBottom: 15 }}>तुम्ही {activeTruck} डिलीट करत आहात. या ट्रकचा सगळा हिशोब पुसला जाईल!</Text>
+          <Text style={{ color: '#64748b', marginBottom: 15 }}>तुम्ही {activeTruck} डिलीट करत आहात!</Text>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
             <TouchableOpacity style={s.modalBtnCancel} onPress={() => setDeleteModalVisible(false)}><Text style={{ color: '#64748b', fontWeight: 'bold' }}>रद्द करा</Text></TouchableOpacity>
             <TouchableOpacity style={[s.modalBtnSave, { backgroundColor: '#ef4444' }]} onPress={confirmDelete}><Text style={{ color: '#fff', fontWeight: 'bold' }}>हो, डिलीट करा</Text></TouchableOpacity>
+          </View>
+        </View></View>
+      </Modal>
+
+      <Modal visible={clearModalVisible} transparent animationType="fade">
+        <View style={s.modalBg}><View style={s.modalBox}><Text style={s.modalTitle}>डेटा पुसायचा का?</Text>
+          <Text style={{ color: '#64748b', marginBottom: 15 }}>तुमचा सगळा हिशोब पुसला जाईल!</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
+            <TouchableOpacity style={s.modalBtnCancel} onPress={() => setClearModalVisible(false)}><Text style={{ color: '#64748b', fontWeight: 'bold' }}>रद्द करा</Text></TouchableOpacity>
+            <TouchableOpacity style={[s.modalBtnSave, { backgroundColor: '#ef4444' }]} onPress={handleClearHistory}><Text style={{ color: '#fff', fontWeight: 'bold' }}>हो, पुसा</Text></TouchableOpacity>
           </View>
         </View></View>
       </Modal>
@@ -181,6 +185,7 @@ function Card({ title, value, color, icon, bg }) {
 
 const s = StyleSheet.create({
   c: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEE2E2', padding: 8, borderRadius: 8 },
   truckHeader: { backgroundColor: '#fff', padding: 12, borderRadius: 12, marginBottom: 15, elevation: 2 },
   truckLabel: { fontSize: 12, fontWeight: 'bold', color: '#64748b' },
   truckBtn: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F1F5F9', marginRight: 8, borderWidth: 1, borderColor: '#e2e8f0' },
@@ -193,6 +198,8 @@ const s = StyleSheet.create({
   cardVal: { fontSize: 22, fontWeight: 'bold' },
   shareBtn: { backgroundColor: '#25D366', padding: 18, borderRadius: 16, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, elevation: 4 },
   shareBtnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16, marginLeft: 8 },
+  clearBtn: { marginTop: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 15, backgroundColor: '#FEE2E2', borderRadius: 12 },
+  clearBtnTxt: { color: '#ef4444', fontWeight: 'bold', fontSize: 15, marginLeft: 8 },
   alertBox: { backgroundColor: '#FEF3C7', padding: 16, borderRadius: 12, flexDirection: 'row', marginBottom: 20, borderWidth: 1, borderColor: '#FDE68A', alignItems: 'center' },
   alertTitle: { fontWeight: 'bold', color: '#B45309', fontSize: 15 },
   alertTxt: { color: '#92400E', fontSize: 12, marginTop: 2 },
