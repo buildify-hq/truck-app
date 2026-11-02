@@ -19,25 +19,21 @@ export default function Login() {
     
     setLoading(true);
     
-    // नावातील स्पेस काढून ईमेल तयार करणे
     const cleanName = name.toLowerCase().replace(/\s+/g, '');
     const dummyEmail = `${cleanName}@truckapp.com`;
-    // Firebase साठी पासवर्ड (उदा. पिन 1234 असेल तर 1234123)
     const password = `${pin}123`;
 
     try {
       // 🚀 सुपर ॲडमिनसाठी खास लॉजिक
       if (cleanName === 'admin') {
         try {
-          // आधी जुन्या पासवर्डने (admin123) प्रयत्न करा
           await signInWithEmailAndPassword(auth, dummyEmail, 'admin123');
-          return; // जर लॉगिन झालं तर इथेच थांबा
+          return; 
         } catch (e) {
-          // जर जुन्या पासवर्डने लॉगिन झालं नाही, तर खालील नवीन पिन लॉजिक वापरेल
+          // जर जुन्या पासवर्डने लॉगिन झालं नाही, तर नवीन पिन लॉजिक वापरेल
         }
       }
       
-      // बाकी सगळ्यांसाठी (ओनर आणि ड्रायव्हर) नवीन पिन लॉजिक
       await signInWithEmailAndPassword(auth, dummyEmail, password);
       
     } catch (error) {
