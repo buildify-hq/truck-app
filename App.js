@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'; 
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -31,14 +31,19 @@ function OwnerTabs() {
         tabBarStyle: { paddingBottom: insets.bottom > 0 ? insets.bottom + 5 : 12, paddingTop: 8, height: 65 + (insets.bottom > 0 ? insets.bottom : 12) },
         tabBarLabelStyle: { fontSize: 9, fontWeight: '600', marginBottom: 5 }
       })}>
-      <Tab.Screen name="डॅशबोर्ड" component={Dashboard} /><Tab.Screen name="डिझेल" component={FuelEntry} />
-      <Tab.Screen name="कार्गो" component={Kargoship} /><Tab.Screen name="ड्रायव्हर" component={Driver} />
-      <Tab.Screen name="खर्च" component={Expenses} /><Tab.Screen name="सर्व्हिसिंग" component={Maintenance} />
-      <Tab.Screen name="फाईल्स" component={Files} /><Tab.Screen name="अलर्ट" component={Alerts} />
+      <Tab.Screen name="डॅशबोर्ड" component={Dashboard} />
+      <Tab.Screen name="डिझेल" component={FuelEntry} />
+      <Tab.Screen name="कार्गो" component={Kargoship} />
+      <Tab.Screen name="ड्रायव्हर" component={Driver} />
+      <Tab.Screen name="खर्च" component={Expenses} />
+      <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} />
+      <Tab.Screen name="फाईल्स" component={Files} />
+      <Tab.Screen name="अलर्ट" component={Alerts} />
     </Tab.Navigator>
   );
 }
 
+// 🚀 ड्रायव्हरसाठी टॅब (यातून कार्गो काढून टाकलाय)
 function DriverTabs() {
   const insets = useSafeAreaInsets();
   return (
@@ -48,7 +53,9 @@ function DriverTabs() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 5 }
       }}>
       <Tab.Screen name="डिझेल एंट्री" component={FuelEntry} options={{ tabBarIcon: ({color, size}) => <Ionicons name="speedometer-outline" size={size} color={color} /> }} />
-      <Tab.Screen name="कार्गो स्लिप" component={Kargoship} options={{ tabBarIcon: ({color, size}) => <Ionicons name="cube-outline" size={size} color={color} /> }} />
+      
+      {/* ❌ कार्गो स्लिप काढून टाकली आहे */}
+      
       <Tab.Screen name="फाईल्स" component={Files} options={{ tabBarIcon: ({color, size}) => <Ionicons name="folder-outline" size={size} color={color} /> }} />
       <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} options={{ tabBarIcon: ({color, size}) => <Ionicons name="construct-outline" size={size} color={color} /> }} />
     </Tab.Navigator>
@@ -84,7 +91,14 @@ export default function App() {
     return () => { unsubscribeAuth(); if (unsubscribeDoc) unsubscribeDoc(); };
   }, []);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#2563EB" />
+        <Text style={{ marginTop: 10, fontSize: 16, color: '#333' }}>लोड होत आहे...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -97,4 +111,4 @@ export default function App() {
       </NavigationContainer>
     </SafeAreaProvider>
   );
-}
+  }
