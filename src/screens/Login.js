@@ -14,22 +14,20 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
-    if (!name || !pin) return showAlert('Error', 'कृपया नाव आणि पिन भरा');
-    if (pin.length !== 4) return showAlert('Error', 'कृपया ४-अंकी पिन टाका');
+    if (!name || !pin) return showAlert('Error', 'Please enter Name and PIN');
+    if (pin.length !== 4) return showAlert('Error', 'PIN must be exactly 4 digits');
     
     setLoading(true);
+    // नावातील स्पेस काढून ईमेल तयार करणे (उदा. "Sagar Patil" => "sagarpatil@truckapp.com")
     const cleanName = name.toLowerCase().replace(/\s+/g, '');
     const dummyEmail = `${cleanName}@truckapp.com`;
+    // Firebase साठी ६ अक्षरांचा पासवर्ड लागतो, म्हणून पिनसोबत 123 जोडत आहोत
     const password = `${pin}123`;
 
     try {
       await signInWithEmailAndPassword(auth, dummyEmail, password);
     } catch (error) {
-      let msg = error.message;
-      if (msg.includes('auth/invalid-credential') || msg.includes('auth/user-not-found')) {
-        msg = 'चुकीचं नाव किंवा पिन! कृपया पुन्हा प्रयत्न करा.';
-      }
-      showAlert('Error', msg); 
+      showAlert('Login Failed', 'Invalid Name or PIN. Please try again.'); 
       setLoading(false);
     }
   };
@@ -37,45 +35,67 @@ export default function Login() {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.container}>
       <ScrollView contentContainerStyle={s.scrollContainer} keyboardShouldPersistTaps="handled">
+        
         <View style={s.logoBox}>
           <View style={s.logoCircle}><Ionicons name="bus" size={50} color="#fff" /></View>
-          <Text style={s.title}>ट्रक हिशोब</Text>
-          <Text style={s.subtitle}>तुमचा व्यवसाय, आमची जबाबदारी</Text>
+          <Text style={s.title}>Truck App</Text>
+          <Text style={s.subtitle}>Manage your business easily</Text>
         </View>
+        
         <View style={s.card}>
-          <Text style={s.cardTitle}>लॉगिन करा</Text>
-          <Text style={s.label}>तुमचं नाव (ID)</Text>
+          <Text style={s.cardTitle}>Login</Text>
+          
+          <Text style={s.label}>Name (ID)</Text>
           <View style={s.inputWrapper}>
             <Ionicons name="person-outline" size={20} color="#64748b" style={s.icon} />
-            <TextInput style={s.input} placeholder="उदा. sagar किंवा admin" placeholderTextColor="#94a3b8" value={name} onChangeText={setName} autoCapitalize="none" />
+            <TextInput 
+              style={s.input} 
+              placeholder="e.g. sagar or admin" 
+              placeholderTextColor="#64748b" 
+              value={name} 
+              onChangeText={setName} 
+              autoCapitalize="none" 
+            />
           </View>
-          <Text style={s.label}>४-अंकी पिन</Text>
+          
+          <Text style={s.label}>4-Digit PIN</Text>
           <View style={s.inputWrapper}>
             <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={s.icon} />
-            <TextInput style={s.input} placeholder="उदा. 1234" placeholderTextColor="#94a3b8" value={pin} onChangeText={setPin} secureTextEntry keyboardType="numeric" maxLength={4} />
+            <TextInput 
+              style={s.input} 
+              placeholder="e.g. 1234" 
+              placeholderTextColor="#64748b" 
+              value={pin} 
+              onChangeText={setPin} 
+              secureTextEntry 
+              keyboardType="numeric" 
+              maxLength={4} 
+            />
           </View>
+          
           <TouchableOpacity style={s.btn} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnTxt}>लॉगिन करा</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnTxt}>Login</Text>}
           </TouchableOpacity>
         </View>
+        
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' },
+  container: { flex: 1, backgroundColor: '#0F172A' }, // डार्क बॅकग्राउंड
   scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   logoBox: { alignItems: 'center', marginBottom: 30 },
   logoCircle: { width: 90, height: 90, backgroundColor: '#2563EB', borderRadius: 45, justifyContent: 'center', alignItems: 'center', elevation: 10, marginBottom: 15 },
   title: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: 1 },
   subtitle: { fontSize: 14, color: '#94a3b8', marginTop: 5, fontWeight: '500' },
-  card: { backgroundColor: '#fff', padding: 25, borderRadius: 24, elevation: 5 },
-  cardTitle: { fontSize: 22, fontWeight: 'bold', color: '#1E293B', marginBottom: 20 },
-  label: { fontSize: 14, fontWeight: '600', color: '#475569', marginBottom: 8, marginTop: 10 },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingHorizontal: 15, height: 55 },
+  card: { backgroundColor: '#1E293B', padding: 25, borderRadius: 24, elevation: 5, borderWidth: 1, borderColor: '#334155' }, // डार्क कार्ड
+  cardTitle: { fontSize: 22, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: '#CBD5E1', marginBottom: 8, marginTop: 10 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#334155', borderRadius: 12, paddingHorizontal: 15, height: 55 },
   icon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 16, color: '#1E293B', fontWeight: '500' },
-  btn: { backgroundColor: '#2563EB', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 25 },
+  input: { flex: 1, fontSize: 16, color: '#F8FAFC', fontWeight: '500' },
+  btn: { backgroundColor: '#3B82F6', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 25 },
   btnTxt: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }
 });
