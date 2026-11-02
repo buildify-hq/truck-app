@@ -8,8 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 export default function SuperAdmin() {
   const [users, setUsers] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [ownerId, setOwnerId] = useState('');
-  const [ownerPass, setOwnerPass] = useState('');
+  
+  // फक्त ओनरसाठी माहिती
+  const [ownerName, setOwnerName] = useState('');
+  const [ownerPhone, setOwnerPhone] = useState('');
+  const [ownerPin, setOwnerPin] = useState('');
   const [truckId, setTruckId] = useState('');
 
   useEffect(() => {
@@ -17,7 +20,10 @@ export default function SuperAdmin() {
       const usersList = [];
       snapshot.forEach((doc) => {
         const data = doc.data();
-        if (data.role !== 'superadmin') usersList.push({ id: doc.id, ...data, isActive: data.isActive !== false });
+        // फक्त ओनर दाखवण्यासाठी
+        if (data.role === 'owner') {
+          usersList.push({ id: doc.id, ...data, isActive: data.isActive !== false });
+        }
       });
       setUsers(usersList);
     });
@@ -30,9 +36,9 @@ export default function SuperAdmin() {
 
   const deleteUser = async (id) => {
     if (Platform.OS === 'web') {
-      if (window.confirm("हा युझर डिलीट करायचा का?")) { try { await deleteDoc(doc(db, "users", id)); } catch (e) { window.alert(e.message); } }
+      if (window.confirm("हा ओनर डिलीट करायचा का?")) { try { await deleteDoc(doc(db, "users", id)); } catch (e) { window.alert(e.message); } }
     } else {
-      Alert.alert("युझर डिलीट करायचा?", "हा युझर कायमचा डिलीट होईल.", [
+      Alert.alert("ओनर डिलीट करायचा?", "हा ओनर कायमचा डिलीट होईल.", [
         { text: "रद्द करा", style: "cancel" },
         { text: "हो, डिलीट करा", style: "destructive", onPress: async () => { try { await deleteDoc(doc(db, "users", id)); } catch (e) { Alert.alert('Error', e.message); } } }
       ]);
@@ -40,26 +46,48 @@ export default function SuperAdmin() {
   };
 
   const addNewOwner = async () => {
-    if (!ownerId || !ownerPass) return Alert.alert('Error', 'ID आणि पासवर्ड भरा');
+    if (!ownerName || !ownerPhone || !ownerPin || !truckId) {
+      return Alert.alert('Error', 'कृपया सगळी माहिती भरा (नाव, नंबर, ४-अंकी पिन, ट्रक नंबर)');
+    }
+    if (ownerPin.length !== 4) {
+      return Alert.alert('Error', 'कृपया ४ अंकी पिन टाका');
+    }
+
     try {
-      const email = `${ownerId.toLowerCase()}@truckapp.com`;
-      const userCred = await createUserWithEmailAndPassword(auth, email, ownerPass);
+      // नावातील स्पेस काढून ईमेल तयार करणे (उदा. "Sagar Patil" => "sagarpatil@truckapp.com")
+      const cleanName = ownerName.toLowerCase().replace(/\s+/g, '');
+      const email = `${cleanName}@truckapp.com`;
+      const password = `${ownerPin}123`; // Firebase साठी ६ अक्षरांचा पासवर्ड लागतो
+
+      const userCred = await createUserWithEmailAndPassword(auth, email, password);
+      
       await setDoc(doc(db, "users", userCred.user.uid), {
-        userId: ownerId.toLowerCase(), role: "owner", truckId: truckId.toUpperCase() || 'MH-12-AB-1234',
-        isActive: true, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), createdAt: new Date()
+        name: ownerName,          // हेच नाव लॉगिनसाठी वापरलं जाईल
+        phone: ownerPhone,        
+        role: "owner",            
+        truckId: truckId.toUpperCase(),
+        isActive: true, 
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date()
       });
+      
       Alert.alert('✅ झालं', 'नवीन ओनर तयार झाला!');
-      setModalVisible(false); setOwnerId(''); setOwnerPass(''); setTruckId('');
-    } catch (e) { Alert.alert('Error', e.message); }
+      setModalVisible(false); 
+      setOwnerName(''); setOwnerPhone(''); setOwnerPin(''); setTruckId('');
+    } catch (e) { 
+      Alert.alert('Error', e.message); 
+    }
   };
 
   const renderItem = ({ item }) => (
     <View style={s.card}>
       <View style={{ flex: 1 }}>
-        <Text style={s.userName}>{item.userId || 'Unknown'}</Text>
-        <Text style={s.roleTxt}>रोल: {item.role === 'owner' ? 'ट्रक मालक' : 'ड्रायव्हर'}</Text>
+        <Text style={s.userName}>{item.name || 'Unknown'}</Text>
+        <Text style={s.roleTxt}>मो: {item.phone}</Text>
+        <Text style={s.roleTxt}>ट्रक: {item.truckId}</Text>
         {item.expiryDate && <Text style={s.expiryTxt}>एक्सपायरी: {new Date(item.expiryDate).toLocaleDateString()}</Text>}
       </View>
+      
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={{ alignItems: 'center', marginRight: 15 }}>
           <Switch value={item.isActive} onValueChange={() => toggleStatus(item.id, item.isActive)} trackColor={{ false: "#ef4444", true: "#10B981" }} thumbColor={"#fff"} />
@@ -73,20 +101,34 @@ export default function SuperAdmin() {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <View><Text style={s.title}>सुपर अॅडमिन</Text><Text style={s.subtitle}>सगळ्या ग्राहकांचं कंट्रोल</Text></View>
+        <View><Text style={s.title}>सुपर अॅडमिन</Text><Text style={s.subtitle}>सगळ्या ओनर्सचं कंट्रोल</Text></View>
         <TouchableOpacity onPress={() => auth.signOut()} style={s.logoutBtn}><Ionicons name="log-out-outline" size={20} color="#fff" /></TouchableOpacity>
       </View>
+      
       <TouchableOpacity style={s.addBtn} onPress={() => setModalVisible(true)}>
         <Ionicons name="person-add" size={20} color="#fff" /><Text style={s.addBtnTxt}>नवीन ओनर ॲड करा</Text>
       </TouchableOpacity>
-      <FlatList data={users} keyExtractor={(item) => item.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 20 }} ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, color: '#64748b' }}>कोणतेही ग्राहक सापडले नाहीत.</Text>} />
+
+      <FlatList data={users} keyExtractor={(item) => item.id} renderItem={renderItem} contentContainerStyle={{ paddingBottom: 20 }} ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, color: '#64748b' }}>कोणतेही ओनर सापडले नाहीत.</Text>} />
+      
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={s.modalBg}><View style={s.modalBox}>
           <Text style={s.modalTitle}>नवीन ओनर तयार करा</Text>
-          <Text style={s.label}>ओनरचा ID</Text><TextInput style={s.input} value={ownerId} onChangeText={setOwnerId} autoCapitalize="none" />
-          <Text style={s.label}>पासवर्ड</Text><TextInput style={s.input} value={ownerPass} onChangeText={setOwnerPass} secureTextEntry />
-          <Text style={s.label}>ट्रक नंबर</Text><TextInput style={s.input} value={truckId} onChangeText={setTruckId} autoCapitalize="characters" />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
+          
+          <Text style={s.label}>ओनरचं नाव (लॉगिनसाठी)</Text>
+          <TextInput style={s.input} value={ownerName} onChangeText={setOwnerName} placeholder="उदा. सागर" placeholderTextColor="#94A3B8" />
+          
+          <Text style={s.label}>मोबाईल नंबर</Text>
+          <TextInput style={s.input} value={ownerPhone} onChangeText={setOwnerPhone} keyboardType="numeric" maxLength={10} placeholder="उदा. 9876543210" placeholderTextColor="#94A3B8" />
+          
+          <Text style={s.label}>४-अंकी पिन</Text>
+          {/* ⚡️ इथे secureTextEntry आणि color मुळे डॉट्स व्यवस्थित दिसतील */}
+          <TextInput style={s.input} value={ownerPin} onChangeText={setOwnerPin} secureTextEntry={true} keyboardType="numeric" maxLength={4} placeholder="उदा. 1234" placeholderTextColor="#94A3B8" />
+          
+          <Text style={s.label}>ट्रक नंबर</Text>
+          <TextInput style={s.input} value={truckId} onChangeText={setTruckId} autoCapitalize="characters" placeholder="उदा. MH-12-AB-1234" placeholderTextColor="#94A3B8" />
+          
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 20 }}>
             <TouchableOpacity style={s.modalBtnCancel} onPress={() => setModalVisible(false)}><Text style={{ color: '#64748b', fontWeight: 'bold' }}>रद्द करा</Text></TouchableOpacity>
             <TouchableOpacity style={s.modalBtnSave} onPress={addNewOwner}><Text style={{ color: '#fff', fontWeight: 'bold' }}>तयार करा</Text></TouchableOpacity>
           </View>
@@ -110,7 +152,8 @@ const s = StyleSheet.create({
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
   modalBox: { backgroundColor: '#fff', padding: 20, borderRadius: 12 }, modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#1E293B' },
   label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 5, marginTop: 10 },
-  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#F8FAFC' },
+  // ⚡️ खाली input मध्ये color: '#000' टाकलाय, जेणेकरून मजकूर काळा दिसेल आणि पांढरा नाही
+  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, backgroundColor: '#F8FAFC', color: '#000' }, 
   modalBtnCancel: { padding: 12, flex: 1, alignItems: 'center', backgroundColor: '#F1F5F9', borderRadius: 8, marginRight: 10 },
   modalBtnSave: { padding: 12, flex: 1, alignItems: 'center', backgroundColor: '#3B82F6', borderRadius: 8 }
 });
