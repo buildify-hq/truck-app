@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { loadData, addEntry, deleteEntry, getActiveTruck } from '../storage';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Expenses() {
   const [name, setName] = useState('');
@@ -19,29 +20,40 @@ export default function Expenses() {
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const save = async () => {
-    if (!name || !amount) return Alert.alert('टीप', 'खर्चाचं नाव आणि रक्कम भरा');
+    if (!name || !amount) return Alert.alert('Error', 'Please enter expense name and amount');
     await addEntry('EXPENSES', { name, amount, date: new Date().toLocaleDateString() });
     setName(''); setAmount('');
     load();
+    Alert.alert('Success', 'Expense added!');
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: '#0F172A' }}>
+      <ScrollView style={s.c} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
         
         <View style={s.headerBox}>
-          <Text style={s.headerTxt}>सध्याचा ट्रक: {activeTruck}</Text>
+          <Ionicons name="wallet" size={24} color="#60A5FA" />
+          <Text style={s.headerTxt}>Current Truck: <Text style={{color:'#F8FAFC', fontWeight:'bold'}}>{activeTruck}</Text></Text>
         </View>
 
         <View style={s.form}>
-          <Text style={s.label}>खर्चाचं नाव (उदा. टायर, टोल, सर्व्हिसिंग)</Text>
-          <TextInput style={s.input} placeholder="उदा. टायर पंक्चर" placeholderTextColor="#94a3b8" value={name} onChangeText={setName} />
-          <Text style={s.label}>खर्चाची रक्कम (₹)</Text>
-          <TextInput style={s.input} placeholder="उदा. 500" placeholderTextColor="#94a3b8" keyboardType="numeric" value={amount} onChangeText={setAmount} />
-          <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
+          <Text style={s.label}>Expense Name (e.g. Tyre, Toll, Repair)</Text>
+          <TextInput style={s.input} placeholder="e.g. Tyre Puncture" placeholderTextColor="#64748B" value={name} onChangeText={setName} />
+          
+          <Text style={s.label}>Amount (₹)</Text>
+          <TextInput style={s.input} placeholder="e.g. 500" placeholderTextColor="#64748B" keyboardType="numeric" value={amount} onChangeText={setAmount} />
+          
+          <TouchableOpacity style={s.btn} onPress={save} activeOpacity={0.8}>
+            <Text style={s.btnTxt}>Save Expense</Text>
+          </TouchableOpacity>
         </View>
-        
-        <FlatList data={list} keyExtractor={(i) => i.id} scrollEnabled={false}
+
+        <Text style={s.sectionTitle}>Expense History</Text>
+        <FlatList 
+          data={list} 
+          keyExtractor={(i) => i.id} 
+          scrollEnabled={false}
+          ListEmptyComponent={<Text style={{ color: '#64748B', textAlign: 'center', marginTop: 10 }}>No expenses added yet.</Text>}
           renderItem={({ item }) => (
             <View style={s.row}>
               <View style={{ flex: 1 }}>
@@ -50,7 +62,7 @@ export default function Expenses() {
               </View>
               <Text style={s.rowAmt}>₹{item.amount}</Text>
               <TouchableOpacity onPress={async () => { await deleteEntry('EXPENSES', item.id); load(); }}>
-                <Text style={s.del}>काढा</Text>
+                <Ionicons name="trash-outline" size={20} color="#EF4444" />
               </TouchableOpacity>
             </View>
           )}
@@ -61,17 +73,19 @@ export default function Expenses() {
 }
 
 const s = StyleSheet.create({
-  c: { flex: 1, backgroundColor: '#F8FAFC', padding: 16 },
-  headerBox: { backgroundColor: '#e2e8f0', padding: 10, borderRadius: 8, marginBottom: 10 },
-  headerTxt: { fontWeight: 'bold', color: '#334155', textAlign: 'center' },
-  form: { backgroundColor: '#fff', padding: 16, borderRadius: 12, marginBottom: 16, elevation: 2 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 6, marginTop: 10 },
-  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 8, padding: 12, fontSize: 16, color: '#000', backgroundColor: '#f8fafc' },
-  btn: { backgroundColor: '#9333EA', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20 },
+  c: { flex: 1, padding: 16 },
+  headerBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', padding: 16, borderRadius: 16, marginBottom: 15, borderWidth: 1, borderColor: '#334155' },
+  headerTxt: { marginLeft: 10, fontSize: 15, color: '#94A3B8', fontWeight: '500' },
+  
+  form: { backgroundColor: '#1E293B', padding: 20, borderRadius: 20, marginBottom: 20, borderWidth: 1, borderColor: '#334155' },
+  label: { fontSize: 14, fontWeight: 'bold', color: '#CBD5E1', marginBottom: 6, marginTop: 12 },
+  input: { borderWidth: 1, borderColor: '#334155', borderRadius: 12, padding: 15, fontSize: 16, color: '#F8FAFC', backgroundColor: '#0F172A' },
+  btn: { backgroundColor: '#EF4444', padding: 16, borderRadius: 12, alignItems: 'center', marginTop: 20 },
   btnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  row: { backgroundColor: '#fff', padding: 12, borderRadius: 10, marginBottom: 8, flexDirection: 'row', alignItems: 'center' },
-  rowT: { fontWeight: 'bold', fontSize: 15, color: '#1e293b' },
-  rowD: { fontSize: 13, color: '#64748b', marginTop: 2 },
-  rowAmt: { fontWeight: 'bold', fontSize: 15, color: '#9333EA', marginRight: 15 },
-  del: { color: '#ef4444', fontWeight: 'bold', fontSize: 14 },
+  
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 10 },
+  row: { backgroundColor: '#1E293B', padding: 15, borderRadius: 12, marginBottom: 10, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  rowT: { fontWeight: 'bold', fontSize: 16, color: '#F8FAFC', textTransform: 'capitalize' },
+  rowD: { fontSize: 13, color: '#94A3B8', marginTop: 4 },
+  rowAmt: { fontWeight: 'bold', fontSize: 16, color: '#F87171', marginRight: 15 },
 });
