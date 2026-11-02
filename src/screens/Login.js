@@ -18,14 +18,28 @@ export default function Login() {
     if (pin.length !== 4) return showAlert('Error', 'PIN must be exactly 4 digits');
     
     setLoading(true);
-    // नावातील स्पेस काढून ईमेल तयार करणे (उदा. "Sagar Patil" => "sagarpatil@truckapp.com")
+    
+    // नावातील स्पेस काढून ईमेल तयार करणे
     const cleanName = name.toLowerCase().replace(/\s+/g, '');
     const dummyEmail = `${cleanName}@truckapp.com`;
-    // Firebase साठी ६ अक्षरांचा पासवर्ड लागतो, म्हणून पिनसोबत 123 जोडत आहोत
+    // Firebase साठी पासवर्ड (उदा. पिन 1234 असेल तर 1234123)
     const password = `${pin}123`;
 
     try {
+      // 🚀 सुपर ॲडमिनसाठी खास लॉजिक
+      if (cleanName === 'admin') {
+        try {
+          // आधी जुन्या पासवर्डने (admin123) प्रयत्न करा
+          await signInWithEmailAndPassword(auth, dummyEmail, 'admin123');
+          return; // जर लॉगिन झालं तर इथेच थांबा
+        } catch (e) {
+          // जर जुन्या पासवर्डने लॉगिन झालं नाही, तर खालील नवीन पिन लॉजिक वापरेल
+        }
+      }
+      
+      // बाकी सगळ्यांसाठी (ओनर आणि ड्रायव्हर) नवीन पिन लॉजिक
       await signInWithEmailAndPassword(auth, dummyEmail, password);
+      
     } catch (error) {
       showAlert('Login Failed', 'Invalid Name or PIN. Please try again.'); 
       setLoading(false);
@@ -84,13 +98,13 @@ export default function Login() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0F172A' }, // डार्क बॅकग्राउंड
+  container: { flex: 1, backgroundColor: '#0F172A' },
   scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   logoBox: { alignItems: 'center', marginBottom: 30 },
   logoCircle: { width: 90, height: 90, backgroundColor: '#2563EB', borderRadius: 45, justifyContent: 'center', alignItems: 'center', elevation: 10, marginBottom: 15 },
   title: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: 1 },
   subtitle: { fontSize: 14, color: '#94a3b8', marginTop: 5, fontWeight: '500' },
-  card: { backgroundColor: '#1E293B', padding: 25, borderRadius: 24, elevation: 5, borderWidth: 1, borderColor: '#334155' }, // डार्क कार्ड
+  card: { backgroundColor: '#1E293B', padding: 25, borderRadius: 24, elevation: 5, borderWidth: 1, borderColor: '#334155' },
   cardTitle: { fontSize: 22, fontWeight: 'bold', color: '#F8FAFC', marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '600', color: '#CBD5E1', marginBottom: 8, marginTop: 10 },
   inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#334155', borderRadius: 12, paddingHorizontal: 15, height: 55 },
