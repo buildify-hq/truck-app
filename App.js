@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'; 
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'; 
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -20,25 +20,45 @@ import SuperAdmin from './src/screens/SuperAdmin';
 import Files from './src/screens/Files';
 
 const Tab = createBottomTabNavigator();
-const icons = { 'डॅशबोर्ड': 'grid-outline', 'डिझेल': 'speedometer-outline', 'कार्गो': 'cube-outline', 'ड्रायव्हर': 'person-outline', 'खर्च': 'wallet-outline', 'सर्व्हिसिंग': 'construct-outline', 'अलर्ट': 'notifications-outline', 'फाईल्स': 'folder-outline' };
+
+// 🚀 टॅब्सची नावे इंग्लिशमध्ये
+const icons = { 
+  'Dashboard': 'grid-outline', 'Diesel': 'speedometer-outline', 'Cargo': 'cube-outline', 
+  'Drivers': 'person-outline', 'Expenses': 'wallet-outline', 'Servicing': 'construct-outline', 
+  'Files': 'folder-outline', 'Alerts': 'notifications-outline' 
+};
+
+// 🚀 लॉगआउट फंक्शन
+const handleLogout = () => {
+  Alert.alert("Logout", "Are you sure you want to logout?", [
+    { text: "Cancel", style: "cancel" },
+    { text: "Logout", style: "destructive", onPress: () => signOut(auth) }
+  ]);
+};
 
 function OwnerTabs() {
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => <Ionicons name={icons[route.name]} size={size} color={color} />,
-        tabBarActiveTintColor: '#2563EB', tabBarInactiveTintColor: '#94A3B8', headerStyle: { backgroundColor: '#1E293B' }, headerTintColor: '#fff',
-        tabBarStyle: { paddingBottom: insets.bottom > 0 ? insets.bottom + 5 : 12, paddingTop: 8, height: 65 + (insets.bottom > 0 ? insets.bottom : 12) },
+        tabBarActiveTintColor: '#60A5FA', tabBarInactiveTintColor: '#64748B', 
+        headerStyle: { backgroundColor: '#0F172A' }, headerTintColor: '#fff',
+        headerRight: () => (
+          <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
+            <Ionicons name="log-out-outline" size={24} color="#F87171" />
+          </TouchableOpacity>
+        ),
+        tabBarStyle: { backgroundColor: '#0F172A', borderTopWidth: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 5 : 12, paddingTop: 8, height: 65 + (insets.bottom > 0 ? insets.bottom : 12) },
         tabBarLabelStyle: { fontSize: 9, fontWeight: '600', marginBottom: 5 }
       })}>
-      <Tab.Screen name="डॅशबोर्ड" component={Dashboard} />
-      <Tab.Screen name="डिझेल" component={FuelEntry} />
-      <Tab.Screen name="कार्गो" component={Kargoship} />
-      <Tab.Screen name="ड्रायव्हर" component={Driver} />
-      <Tab.Screen name="खर्च" component={Expenses} />
-      <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} />
-      <Tab.Screen name="फाईल्स" component={Files} />
-      <Tab.Screen name="अलर्ट" component={Alerts} />
+      <Tab.Screen name="Dashboard" component={Dashboard} />
+      <Tab.Screen name="Diesel" component={FuelEntry} />
+      <Tab.Screen name="Cargo" component={Kargoship} />
+      <Tab.Screen name="Drivers" component={Driver} />
+      <Tab.Screen name="Expenses" component={Expenses} />
+      <Tab.Screen name="Servicing" component={Maintenance} />
+      <Tab.Screen name="Files" component={Files} />
+      <Tab.Screen name="Alerts" component={Alerts} />
     </Tab.Navigator>
   );
 }
@@ -47,24 +67,32 @@ function DriverTabs() {
   const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator screenOptions={{
-        tabBarActiveTintColor: '#e67e22', tabBarInactiveTintColor: '#94A3B8', headerStyle: { backgroundColor: '#1E293B' }, headerTintColor: '#fff',
-        tabBarStyle: { paddingBottom: insets.bottom > 0 ? insets.bottom + 5 : 12, paddingTop: 8, height: 65 + (insets.bottom > 0 ? insets.bottom : 12) },
+        tabBarActiveTintColor: '#F59E0B', tabBarInactiveTintColor: '#64748B', 
+        headerStyle: { backgroundColor: '#0F172A' }, headerTintColor: '#fff',
+        headerRight: () => (
+          <TouchableOpacity onPress={handleLogout} style={{ marginRight: 15 }}>
+            <Ionicons name="log-out-outline" size={24} color="#F87171" />
+          </TouchableOpacity>
+        ),
+        tabBarStyle: { backgroundColor: '#0F172A', borderTopWidth: 0, paddingBottom: insets.bottom > 0 ? insets.bottom + 5 : 12, paddingTop: 8, height: 65 + (insets.bottom > 0 ? insets.bottom : 12) },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 5 }
       }}>
-      <Tab.Screen name="डिझेल एंट्री" component={FuelEntry} options={{ tabBarIcon: ({color, size}) => <Ionicons name="speedometer-outline" size={size} color={color} /> }} />
-      {/* कार्गो इथून काढून टाकलाय */}
-      <Tab.Screen name="फाईल्स" component={Files} options={{ tabBarIcon: ({color, size}) => <Ionicons name="folder-outline" size={size} color={color} /> }} />
-      <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} options={{ tabBarIcon: ({color, size}) => <Ionicons name="construct-outline" size={size} color={color} /> }} />
+      <Tab.Screen name="Diesel" component={FuelEntry} options={{ tabBarIcon: ({color, size}) => <Ionicons name="speedometer-outline" size={size} color={color} /> }} />
+      {/* 🚀 कार्गो इथून काढून टाकलाय */}
+      <Tab.Screen name="Files" component={Files} options={{ tabBarIcon: ({color, size}) => <Ionicons name="folder-outline" size={size} color={color} /> }} />
+      <Tab.Screen name="Servicing" component={Maintenance} options={{ tabBarIcon: ({color, size}) => <Ionicons name="construct-outline" size={size} color={color} /> }} />
     </Tab.Navigator>
   );
 }
 
 function BlockedScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FEF2F2', padding: 20 }}>
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A', padding: 20 }}>
       <Ionicons name="lock-closed" size={80} color="#EF4444" />
-      <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#991B1B', marginTop: 20, textAlign: 'center' }}>तुमचं खातं ब्लॉक झालं आहे!</Text>
-      <TouchableOpacity onPress={() => signOut(auth)} style={{ marginTop: 30, backgroundColor: '#EF4444', padding: 15, borderRadius: 10, width: '80%', alignItems: 'center' }}><Text style={{ color: '#fff', fontWeight: 'bold' }}>लॉगआउट करा</Text></TouchableOpacity>
+      <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#F87171', marginTop: 20, textAlign: 'center' }}>Your Account is Blocked!</Text>
+      <TouchableOpacity onPress={() => signOut(auth)} style={{ marginTop: 30, backgroundColor: '#EF4444', padding: 15, borderRadius: 10, width: '80%', alignItems: 'center' }}>
+        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Logout</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -90,9 +118,9 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#2563EB" />
-        <Text style={{ marginTop: 10, fontSize: 16, color: '#333' }}>लोड होत आहे...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0F172A' }}>
+        <ActivityIndicator size="large" color="#60A5FA" />
+        <Text style={{ marginTop: 10, fontSize: 16, color: '#94A3B8' }}>Loading...</Text>
       </View>
     );
   }
@@ -108,4 +136,4 @@ export default function App() {
       </NavigationContainer>
     </SafeAreaProvider>
   );
-  }
+}
