@@ -43,7 +43,6 @@ function OwnerTabs() {
   );
 }
 
-// 🚀 ड्रायव्हरसाठी टॅब (यातून कार्गो काढून टाकलाय)
 function DriverTabs() {
   const insets = useSafeAreaInsets();
   return (
@@ -53,9 +52,7 @@ function DriverTabs() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginBottom: 5 }
       }}>
       <Tab.Screen name="डिझेल एंट्री" component={FuelEntry} options={{ tabBarIcon: ({color, size}) => <Ionicons name="speedometer-outline" size={size} color={color} /> }} />
-      
-      {/* ❌ कार्गो स्लिप काढून टाकली आहे */}
-      
+      {/* कार्गो इथून काढून टाकलाय */}
       <Tab.Screen name="फाईल्स" component={Files} options={{ tabBarIcon: ({color, size}) => <Ionicons name="folder-outline" size={size} color={color} /> }} />
       <Tab.Screen name="सर्व्हिसिंग" component={Maintenance} options={{ tabBarIcon: ({color, size}) => <Ionicons name="construct-outline" size={size} color={color} /> }} />
     </Tab.Navigator>
