@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, S
 import { useFocusEffect } from '@react-navigation/native';
 import { loadData, addEntry, deleteEntry, getActiveTruck } from '../storage';
 import { auth, db } from '../firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,8 +15,8 @@ export default function Driver() {
   const [activeTruck, setActiveTruck] = useState('');
   
   const [modalVisible, setModalVisible] = useState(false);
-  const [driverEmail, setDriverEmail] = useState('');
-  const [driverPass, setDriverPass] = useState('');
+  const [driverId, setDriverId] = useState('');
+  const [driverPin, setDriverPin] = useState('');
 
   const load = async () => {
     const truck = await getActiveTruck();
@@ -35,18 +35,22 @@ export default function Driver() {
   };
 
   const createDriverAccount = async () => {
-    if (!driverEmail || !driverPass) return Alert.alert('Error', 'ईमेल आणि पासवर्ड भरा');
+    if (!driverId || !driverPin) return Alert.alert('Error', 'ID आणि PIN भरा');
     try {
-      const userCred = await createUserWithEmailAndPassword(auth, driverEmail, driverPass);
+      // 🔥 इथे ड्रायव्हरच्या ID ला आपोआप @truckapp.com जोडलं जाईल
+      const dummyEmail = `${driverId.toLowerCase().trim()}@truckapp.com`;
+      
+      const userCred = await createUserWithEmailAndPassword(auth, dummyEmail, driverPin);
       await setDoc(doc(db, "users", userCred.user.uid), {
-        email: driverEmail,
+        userId: driverId.toLowerCase().trim(),
         role: "driver",
-        linkedTruck: activeTruck
+        linkedTruck: activeTruck,
+        isActive: true
       });
 
-      Alert.alert('✅ झालं', 'ड्रायव्हरचं खातं तयार झालं! आता तो या ईमेलने लॉगिन करू शकतो.');
+      Alert.alert('✅ झालं', `ड्रायव्हर तयार झाला! ID: ${driverId}, PIN: ${driverPin}`);
       setModalVisible(false);
-      setDriverEmail(''); setDriverPass('');
+      setDriverId(''); setDriverPin('');
       
     } catch (error) {
       Alert.alert('Error', error.message);
@@ -75,7 +79,7 @@ export default function Driver() {
           <Text style={s.label}>रक्कम (₹)</Text>
           <TextInput style={s.input} placeholder="उदा. 5000" placeholderTextColor="#94a3b8" keyboardType="numeric" value={amount} onChangeText={setAmount} />
           <Text style={s.label}>नोंद (Optional)</Text>
-          <TextInput style={s.input} placeholder="उदा. ऑक्टोबर महिन्याचा पगार" placeholderTextColor="#94a3b8" value={note} onChangeText={setNote} />
+          <TextInput style={s.input} placeholder="उदा. पगार" placeholderTextColor="#94a3b8" value={note} onChangeText={setNote} />
           <TouchableOpacity style={s.btn} onPress={save}><Text style={s.btnTxt}>सेव्ह करा</Text></TouchableOpacity>
         </View>
 
@@ -94,11 +98,14 @@ export default function Driver() {
         <Modal visible={modalVisible} transparent animationType="slide">
           <View style={s.modalBg}>
             <View style={s.modalBox}>
-              <Text style={s.modalTitle}>ड्रायव्हरचं खातं तयार करा</Text>
-              <Text style={s.label}>ड्रायव्हरचा ईमेल</Text>
-              <TextInput style={s.input} placeholder="driver@gmail.com" value={driverEmail} onChangeText={setDriverEmail} keyboardType="email-address" autoCapitalize="none" />
-              <Text style={s.label}>पासवर्ड (किमान ६ अक्षरं)</Text>
-              <TextInput style={s.input} placeholder="******" value={driverPass} onChangeText={setDriverPass} secureTextEntry />
+              <Text style={s.modalTitle}>ड्रायव्हर तयार करा</Text>
+              
+              <Text style={s.label}>ड्रायव्हरचा ID (उदा. 101 किंवा raju)</Text>
+              <TextInput style={s.input} placeholder="उदा. 101" value={driverId} onChangeText={setDriverId} autoCapitalize="none" />
+              
+              <Text style={s.label}>PIN (उदा. 1234)</Text>
+              <TextInput style={s.input} placeholder="****" value={driverPin} onChangeText={setDriverPin} secureTextEntry />
+              
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
                 <TouchableOpacity style={s.modalBtnCancel} onPress={() => setModalVisible(false)}><Text style={{ color: '#64748b', fontWeight: 'bold' }}>रद्द करा</Text></TouchableOpacity>
                 <TouchableOpacity style={s.modalBtnSave} onPress={createDriverAccount}><Text style={{ color: '#fff', fontWeight: 'bold' }}>तयार करा</Text></TouchableOpacity>
