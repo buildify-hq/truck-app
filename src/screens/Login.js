@@ -1,60 +1,86 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
-import { auth, db } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Login() {
-  const [userId, setUserId] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
+  const [pin, setPin] = useState('');
   const [loading, setLoading] = useState(false);
 
   const showAlert = (title, msg) => {
     if (Platform.OS === 'web') window.alert(`${title}: ${msg}`); else Alert.alert(title, msg);
   };
 
-  const handleAuth = async () => {
-    if (!userId || !password) return showAlert('Error', 'कृपया ID आणि पासवर्ड भरा');
+  const handleLogin = async () => {
+    if (!name || !pin) return showAlert('Error', 'कृपया नाव आणि पिन भरा');
+    if (pin.length !== 4) return showAlert('Error', 'कृपया ४-अंकी पिन टाका');
+    
     setLoading(true);
-    const dummyEmail = `${userId.toLowerCase().trim()}@truckapp.com`;
+    const cleanName = name.toLowerCase().replace(/\s+/g, '');
+    const dummyEmail = `${cleanName}@truckapp.com`;
+    const password = `${pin}123`;
+
     try {
-      if (isLogin) {
-        await signInWithEmailAndPassword(auth, dummyEmail, password);
-      } else {
-        const userCredential = await createUserWithEmailAndPassword(auth, dummyEmail, password);
-        const assignedRole = userId.toLowerCase() === 'admin' ? 'superadmin' : 'owner';
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          userId: userId.toLowerCase().trim(), role: assignedRole, isActive: true, createdAt: new Date()
-        });
-      }
+      await signInWithEmailAndPassword(auth, dummyEmail, password);
     } catch (error) {
       let msg = error.message;
-      if (msg.includes('auth/invalid-credential')) msg = 'चुकीचा ID किंवा पासवर्ड!';
-      if (msg.includes('auth/email-already-in-use')) msg = 'हा ID आधीच वापरात आहे!';
-      showAlert('Error', msg); setLoading(false);
+      if (msg.includes('auth/invalid-credential') || msg.includes('auth/user-not-found')) {
+        msg = 'चुकीचं नाव किंवा पिन! कृपया पुन्हा प्रयत्न करा.';
+      }
+      showAlert('Error', msg); 
+      setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <ScrollView contentContainerStyle={s.container} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.container}>
+      <ScrollView contentContainerStyle={s.scrollContainer} keyboardShouldPersistTaps="handled">
+        
+        {/* App Logo & Title */}
         <View style={s.logoBox}>
-          <Ionicons name="bus" size={80} color="#2563EB" />
+          <View style={s.logoCircle}>
+            <Ionicons name="bus" size={50} color="#fff" />
+          </View>
           <Text style={s.title}>ट्रक हिशोब</Text>
-          <Text style={s.subtitle}>तुमचा व्यवसाय, आमचं ॲप</Text>
+          <Text style={s.subtitle}>तुमचा व्यवसाय, आमची जबाबदारी</Text>
         </View>
-        <View style={s.form}>
-          <Text style={s.label}>तुमचा ID</Text>
-          <TextInput style={s.input} placeholder="उदा. admin / 101" placeholderTextColor="#94a3b8" value={userId} onChangeText={setUserId} autoCapitalize="none" color="#000" />
-          <Text style={s.label}>पासवर्ड (Password / PIN)</Text>
-          <TextInput style={s.input} placeholder="तुमचा पासवर्ड टाका" placeholderTextColor="#94a3b8" value={password} onChangeText={setPassword} secureTextEntry color="#000" />
-          <TouchableOpacity style={s.btn} onPress={handleAuth} disabled={loading}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnTxt}>{isLogin ? 'लॉगिन करा' : 'नवीन खातं तयार करा'}</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => { setIsLogin(!isLogin); setUserId(''); setPassword(''); }} style={s.toggleBtn}>
-            <Text style={s.toggleTxt}>{isLogin ? "नवीन आहात? इथे साइन अप करा" : "आधीच खातं आहे? लॉगिन करा"}</Text>
+
+        {/* Login Form Card */}
+        <View style={s.card}>
+          <Text style={s.cardTitle}>लॉगिन करा</Text>
+          
+          <Text style={s.label}>तुमचं नाव (ID)</Text>
+          <View style={s.inputWrapper}>
+            <Ionicons name="person-outline" size={20} color="#64748b" style={s.icon} />
+            <TextInput 
+              style={s.input} 
+              placeholder="उदा. sagar किंवा admin" 
+              placeholderTextColor="#94a3b8" 
+              value={name} 
+              onChangeText={setName} 
+              autoCapitalize="none" 
+            />
+          </View>
+          
+          <Text style={s.label}>४-अंकी पिन</Text>
+          <View style={s.inputWrapper}>
+            <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={s.icon} />
+            <TextInput 
+              style={s.input} 
+              placeholder="उदा. 1234" 
+              placeholderTextColor="#94a3b8" 
+              value={pin} 
+              onChangeText={setPin} 
+              secureTextEntry 
+              keyboardType="numeric"
+              maxLength={4}
+            />
+          </View>
+          
+          <TouchableOpacity style={s.btn} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.btnTxt}>लॉगिन करा</Text>}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -63,15 +89,18 @@ export default function Login() {
 }
 
 const s = StyleSheet.create({
-  container: { flexGrow: 1, justifyContent: 'center', padding: 20 },
+  container: { flex: 1, backgroundColor: '#0F172A' }, // डार्क ब्लू बॅकग्राउंड
+  scrollContainer: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   logoBox: { alignItems: 'center', marginBottom: 30 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#1E293B', marginTop: 10 },
-  subtitle: { fontSize: 16, color: '#64748b', marginTop: 5 },
-  form: { backgroundColor: '#fff', padding: 20, borderRadius: 16, elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
-  label: { fontSize: 14, fontWeight: 'bold', color: '#334155', marginBottom: 8, marginTop: 15 },
-  input: { borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 10, padding: 15, fontSize: 16, backgroundColor: '#F8FAFC' },
-  btn: { backgroundColor: '#2563EB', padding: 18, borderRadius: 10, alignItems: 'center', marginTop: 30 },
-  btnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  toggleBtn: { marginTop: 20, alignItems: 'center', paddingBottom: 10 },
-  toggleTxt: { color: '#2563EB', fontWeight: 'bold', fontSize: 14 }
+  logoCircle: { width: 90, height: 90, backgroundColor: '#2563EB', borderRadius: 45, justifyContent: 'center', alignItems: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 15, elevation: 10, marginBottom: 15 },
+  title: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: 1 },
+  subtitle: { fontSize: 14, color: '#94a3b8', marginTop: 5, fontWeight: '500' },
+  card: { backgroundColor: '#fff', padding: 25, borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
+  cardTitle: { fontSize: 22, fontWeight: 'bold', color: '#1E293B', marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: '600', color: '#475569', marginBottom: 8, marginTop: 10 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, paddingHorizontal: 15, height: 55 },
+  icon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 16, color: '#1E293B', fontWeight: '500' },
+  btn: { backgroundColor: '#2563EB', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 25, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  btnTxt: { color: '#fff', fontSize: 18, fontWeight: 'bold', letterSpacing: 0.5 }
 });
